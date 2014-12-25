@@ -1,0 +1,26 @@
+<?php
+/**
+ * @file
+ * Cleanup menu_icons variables and menu link options.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function st_menu_extra_uninstall() {
+  $result = db_query("SELECT mlid, options FROM {menu_links} WHERE options LIKE '%mega%'");
+  foreach ($result as $record) {
+    $mlid = $record->mlid;
+    $options = unserialize($record->options);
+    if (isset($options['mega'])) {
+      unset($options['mega']);
+    }      
+    // Save the updated options.
+    db_update('menu_links')
+    ->fields(array(
+      'options' => serialize($options),
+    ))
+    ->condition('mlid', $mlid)
+    ->execute();
+  }
+}

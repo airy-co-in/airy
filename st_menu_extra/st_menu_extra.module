@@ -1,0 +1,74 @@
+<?php
+/**
+ * Implements hook_form_alter().
+ */
+function st_menu_extra_form_alter(&$form, $form_state, $form_id) {
+
+  if ($form_id == 'menu_edit_item') {
+  	if (isset($form['mlid']['#value'])) {
+      $options = unserialize(db_query('SELECT options FROM {menu_links} WHERE mlid = :mlid', array(':mlid' => $form['mlid']['#value']))->fetchField());
+    }
+    if (!isset($options) || !isset($options['mega'])) {
+      $options = array('mega' => NULL);      
+	  }
+	  
+    $form['extra']['mega'] = array(
+      '#type' => 'radios',
+      '#options' => array(1 => t('Yes'), 0 => t('No')),
+      '#title' => t('Mega menu'),
+      '#default_value' => isset($options['mega']) ? $options['mega'] : 0,
+      '#description' => t('Display as mega menu type'),
+    );
+  	
+  	$form['#attributes']['enctype'] = 'multipart/form-data';
+    $form['#submit'][] = 'st_menu_extra_form_submit';
+  }
+
+}
+
+/**
+ * Process the submitted form
+ */
+function st_menu_extra_form_submit($form, &$form_state) {
+  $options = unserialize(db_query('SELECT options FROM {menu_links} WHERE mlid = :mlid', array(':mlid' => $form_state['values']['mlid']))->fetchField());
+  $options['mega'] = $form_state['values']['mega'];  
+  db_update('menu_links')
+  ->fields(array(
+    'options' => serialize($options),
+  ))
+  ->condition('mlid', $form_state['values']['mlid'])
+  ->execute();
+}
+
+// /**
+//  * Implements hook_node_insert().
+//  */
+// function st_menu_extra_node_insert($node) {
+//   st_menu_extra_node_save($node);
+// }
+
+// /**
+//  * Implements hook_node_update().
+//  */
+// function st_menu_extra_node_update($node) {
+//   st_menu_extra_node_save($node);
+// }
+
+// /**
+//  * Helper for hook_node_insert() and hook_node_update().
+//  */
+// function st_menu_extra_node_save($node) {
+//   // Get link options from db.
+//   $options = unserialize(db_query('SELECT options FROM {menu_links} WHERE mlid = :mlid', array(':mlid' => $node->menu['mlid']))->fetchField());
+//   if (!empty($node->menu['mega']) && !empty($node->menu['mega'])) {
+//   	// Add our summary and custom_path info to the options array
+//     $options['mega'] = $node->menu['mega'];    
+//     // Update the link options
+//     db_update('menu_links')
+//     ->fields(array(
+//       'options' => serialize($options),
+//     ))
+//     ->condition('mlid', $node->menu['mlid'])
+//     ->execute();
+//   }
+// }

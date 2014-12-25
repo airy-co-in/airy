@@ -1,0 +1,8 @@
+name = Medicom Procedures
+package = Snappy
+description = Medicom Procedures
+
+version = "7.x-2.1"
+core = "7.x"
+project = "procedures"
+datestamp = "1398607428"

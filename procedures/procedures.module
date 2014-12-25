@@ -1,0 +1,53 @@
+<?php
+
+function procedures_block_info() {
+
+  $blocks['procedures_list'] = array(
+    'info' => t('Procedures_list'),
+    'cache' => DRUPAL_NO_CACHE,
+  );  
+
+  return $blocks;
+}
+
+function procedures_block_view($delta = '') {
+  // This example is adapted from node.module.
+  $block = array();
+
+  switch ($delta) {
+    case 'procedures_list':
+      $block['subject'] = t('Procedures');
+      $block['content'] = get_procedures_list();
+      break;    
+  }
+  return $block;
+}
+
+function get_procedures_list() {
+
+	$procedures_list = array();	
+  $result = db_query("SELECT n.nid, n.title, pl.link_title, pl.mlid, pl.weight
+  FROM {node} n 
+  INNER JOIN {menu_links} ml ON SUBSTRING_INDEX( ml.link_path,  '/', -1 ) = n.nid
+  INNER JOIN {menu_links} pl ON ml.plid = pl.mlid
+  WHERE n.status = 1 and n.type = :type", array(':type' => 'procedures'));
+  while ($record = $result->fetchAssoc()) {    
+    $procedures_list[$record['mlid']]['weight'] = $record['weight'];
+    $procedures_list[$record['mlid']]['name'] = $record['link_title'];
+    $procedures_list[$record['mlid']]['node'][$record['nid']] = array('nid' => $record['nid'], 'title' => $record['title']);
+  }  
+  foreach ($procedures_list as $key => $row) {
+    $volume[$key]  = $row['weight'];        
+  }
+  array_multisort($volume, SORT_ASC, $procedures_list);
+	return theme('procedures_list', array('procedures_list' => $procedures_list));
+}
+
+function procedures_theme() {
+	return array(
+    'procedures_list' => array(      
+      'template' => 'procedures-block',
+      'variables' => array('procedures_list' => NULL), 
+    ),
+  );
+}
